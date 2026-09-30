@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rift Bloom Roses — Management Summary | Power BI Style</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',sans-serif; background:#1A1A2E; color:#fff; min-height:100vh; }
+
+  /* ── TOP NAV (Power BI style) ─────────────────────── */
+  .pbi-nav {
+    background:#252630; height:44px; display:flex; align-items:center;
+    padding:0 16px; gap:12px; border-bottom:1px solid #333;
+    position:sticky; top:0; z-index:100;
+  }
+  .pbi-logo { color:#F2C811; font-size:18px; font-weight:700; letter-spacing:1px; }
+  .pbi-title { color:#ccc; font-size:13px; margin-left:8px; }
+  .pbi-tabs { display:flex; gap:2px; margin-left:auto; }
+  .tab {
+    padding:6px 16px; border-radius:4px 4px 0 0; font-size:12px;
+    cursor:pointer; background:#1e1e2e; color:#aaa; border:1px solid #333;
+    border-bottom:none; transition:all .2s;
+  }
+  .tab.active { background:#F2C811; color:#1A1A2E; font-weight:700; }
+  .tab:hover:not(.active) { background:#2a2a3e; color:#fff; }
+
+  /* ── PAGE CONTAINER ───────────────────────────────── */
+  .page { display:none; padding:16px; animation:fadeIn .3s ease; }
+  .page.active { display:block; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+  /* ── PAGE TITLE ───────────────────────────────────── */
+  .page-title {
+    font-size:15px; font-weight:700; color:#F2C811;
+    margin-bottom:14px; letter-spacing:.5px;
+    padding-bottom:8px; border-bottom:1px solid #333;
+    display:flex; align-items:center; gap:8px;
+  }
+
+  /* ── KPI CARDS ────────────────────────────────────── */
+  .kpi-row { display:grid; gap:10px; margin-bottom:14px; }
+  .kpi-5 { grid-template-columns:repeat(5,1fr); }
+  .kpi-4 { grid-template-columns:repeat(4,1fr); }
+  .kpi-3 { grid-template-columns:repeat(3,1fr); }
+  .kpi-card {
+    border-radius:6px; padding:14px 12px; text-align:center;
+    border-left:4px solid transparent; position:relative;
+    background:#252630;
+  }
+  .kpi-card .kpi-val {
+    font-size:26px; font-weight:700; line-height:1.1; margin-bottom:4px;
+  }
+  .kpi-card .kpi-lbl {
+    font-size:10px; color:#aaa; text-transform:uppercase; letter-spacing:.8px;
+  }
+  .kpi-card .kpi-sub { font-size:10px; color:#777; margin-top:3px; }
+  .kpi-red    { border-left-color:#E74C3C; } .kpi-red    .kpi-val { color:#E74C3C; }
+  .kpi-green  { border-left-color:#2ECC71; } .kpi-green  .kpi-val { color:#2ECC71; }
+  .kpi-blue   { border-left-color:#3498DB; } .kpi-blue   .kpi-val { color:#3498DB; }
+  .kpi-yellow { border-left-color:#F2C811; } .kpi-yellow .kpi-val { color:#F2C811; }
+  .kpi-purple { border-left-color:#9B59B6; } .kpi-purple .kpi-val { color:#9B59B6; }
+  .kpi-teal   { border-left-color:#1ABC9C; } .kpi-teal   .kpi-val { color:#1ABC9C; }
+  .kpi-orange { border-left-color:#E67E22; } .kpi-orange .kpi-val { color:#E67E22; }
+
+  /* ── CHART GRID ───────────────────────────────────── */
+  .chart-grid { display:grid; gap:12px; margin-bottom:14px; }
+  .g-2 { grid-template-columns:1fr 1fr; }
+  .g-3 { grid-template-columns:1fr 1fr 1fr; }
+  .g-32 { grid-template-columns:3fr 2fr; }
+  .g-23 { grid-template-columns:2fr 3fr; }
+  .chart-card {
+    background:#252630; border-radius:6px; padding:14px;
+    border:1px solid #2e2e40;
+  }
+  .chart-card.full { grid-column:1/-1; }
+  .chart-title {
+    font-size:11px; font-weight:600; color:#aaa;
+    text-transform:uppercase; letter-spacing:.6px;
+    margin-bottom:10px;
+  }
+  .chart-wrap { position:relative; }
+
+  /* ── STORY SECTION ────────────────────────────────── */
+  .story-section { margin-bottom:14px; }
+  .story-card {
+    background:#252630; border-radius:6px; padding:16px 18px;
+    border-left:5px solid #F2C811; margin-bottom:10px;
+  }
+  .story-card h3 {
+    font-size:13px; font-weight:700; color:#F2C811;
+    margin-bottom:8px; text-transform:uppercase; letter-spacing:.5px;
+  }
+  .story-card p {
+    font-size:12.5px; color:#ccc; line-height:1.7; margin-bottom:6px;
+  }
+  .story-card.red   { border-left-color:#E74C3C; }
+  .story-card.red h3{ color:#E74C3C; }
+  .story-card.green { border-left-color:#2ECC71; }
+  .story-card.green h3{ color:#2ECC71; }
+  .story-card.blue  { border-left-color:#3498DB; }
+  .story-card.blue h3{ color:#3498DB; }
+  .story-card.orange{ border-left-color:#E67E22; }
+  .story-card.orange h3{ color:#E67E22; }
+  .story-card.purple{ border-left-color:#9B59B6; }
+  .story-card.purple h3{ color:#9B59B6; }
+  .bullet-list { list-style:none; padding:0; margin:6px 0 0; }
+  .bullet-list li {
+    font-size:12px; color:#bbb; padding:3px 0 3px 14px;
+    position:relative; line-height:1.5;
+  }
+  .bullet-list li::before { content:'▸'; position:absolute; left:0; color:#F2C811; }
+  .bullet-list li.red-bullet::before { color:#E74C3C; }
+  .bullet-list li.green-bullet::before { color:#2ECC71; }
+
+  /* ── RECOMMENDATION CARDS ─────────────────────────── */
+  .rec-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .rec-card {
+    background:#1e1e2e; border-radius:6px; padding:14px;
+    border-top:3px solid #F2C811; position:relative;
+  }
+  .rec-card .rec-num {
+    font-size:22px; font-weight:700; color:#F2C811;
+    position:absolute; top:10px; right:14px; opacity:.3;
+  }
+  .rec-card h4 { font-size:12px; font-weight:700; color:#F2C811; margin-bottom:6px; }
+  .rec-card p  { font-size:11.5px; color:#bbb; line-height:1.6; }
+  .rec-card.r-red { border-top-color:#E74C3C; }
+  .rec-card.r-red h4 { color:#E74C3C; }
+  .rec-card.r-red .rec-num { color:#E74C3C; }
+  .rec-card.r-green { border-top-color:#2ECC71; }
+  .rec-card.r-green h4 { color:#2ECC71; }
+  .rec-card.r-green .rec-num { color:#2ECC71; }
+  .rec-card.r-blue { border-top-color:#3498DB; }
+  .rec-card.r-blue h4 { color:#3498DB; }
+  .rec-card.r-blue .rec-num { color:#3498DB; }
+  .rec-card.r-purple { border-top-color:#9B59B6; }
+  .rec-card.r-purple h4 { color:#9B59B6; }
+  .rec-card.r-purple .rec-num { color:#9B59B6; }
+  .rec-card.r-orange { border-top-color:#E67E22; }
+  .rec-card.r-orange h4 { color:#E67E22; }
+  .rec-card.r-orange .rec-num { color:#E67E22; }
+
+  /* ── TABLE ────────────────────────────────────────── */
+  table { width:100%; border-collapse:collapse; font-size:11.5px; }
+  th { background:#1e1e2e; color:#F2C811; padding:7px 10px;
+       text-align:left; font-size:10px; text-transform:uppercase;
+       letter-spacing:.5px; }
+  td { padding:6px 10px; color:#ccc; border-bottom:1px solid #2e2e40; }
+  tr:hover td { background:#2a2a3e; }
+  .badge {
+    display:inline-block; padding:2px 8px; border-radius:10px;
+    font-size:10px; font-weight:600;
+  }
+  .badge-green { background:#1e4a2e; color:#2ECC71; }
+  .badge-red   { background:#4a1e1e; color:#E74C3C; }
+  .badge-amber { background:#4a3a1e; color:#F39C12; }
+  .badge-blue  { background:#1e2e4a; color:#3498DB; }
+
+  /* ── FOOTER ───────────────────────────────────────── */
+  .pbi-footer {
+    background:#252630; padding:8px 16px;
+    font-size:10px; color:#555; text-align:center;
+    border-top:1px solid #333; margin-top:20px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── TOP NAV ─────────────────────────────────────────── -->
+<div class="pbi-nav">
+  <span class="pbi-logo">⚡ Power BI</span>
+  <span class="pbi-title">Rift Bloom Roses — Management Summary Dashboard</span>
+  <div class="pbi-tabs">
+    <div class="tab active" onclick="showPage('overview')">📊 Overview</div>
+    <div class="tab" onclick="showPage('markets')">🌍 Markets</div>
+    <div class="tab" onclick="showPage('products')">🌹 Products</div>
+    <div class="tab" onclick="showPage('quality')">🔬 Quality</div>
+    <div class="tab" onclick="showPage('logistics')">🚚 Logistics</div>
+    <div class="tab" onclick="showPage('story')">📖 Story</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PAGE 1 — EXECUTIVE OVERVIEW
+════════════════════════════════════════════════════════ -->
+<div class="page active" id="page-overview">
+  <div class="page-title">📊 Executive Overview — Rift Bloom Roses Export Sales</div>
+
+  <div class="kpi-row kpi-5">
+    <div class="kpi-card kpi-yellow">
+      <div class="kpi-val">2,226</div>
+      <div class="kpi-lbl">Total Orders</div>
+    </div>
+    <div class="kpi-card kpi-red">
+      <div class="kpi-val">$69.7M</div>
+      <div class="kpi-lbl">Total Revenue</div>
+    </div>
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-val">$31,325</div>
+      <div class="kpi-lbl">Avg Order Value</div>
+      <div class="kpi-sub">Median: $925</div>
+    </div>
+    <div class="kpi-card kpi-green">
+      <div class="kpi-val">4.02 / 5</div>
+      <div class="kpi-lbl">Avg Customer Rating</div>
+    </div>
+    <div class="kpi-card kpi-purple">
+      <div class="kpi-val">0.18%</div>
+      <div class="kpi-lbl">Avg Rejection Rate</div>
+    </div>
+  </div>
+
+  <div class="kpi-row kpi-4">
+    <div class="kpi-card kpi-teal">
+      <div class="kpi-val">6.3M</div>
+      <div class="kpi-lbl">Total Stems Exported</div>
+    </div>
+    <div class="kpi-card kpi-green">
+      <div class="kpi-val">38.4%</div>
+      <div class="kpi-lbl">Orders Confirmed Paid</div>
+    </div>
+    <div class="kpi-card kpi-red">
+      <div class="kpi-val">13.7%</div>
+      <div class="kpi-lbl">Orders Overdue</div>
+    </div>
+    <div class="kpi-card kpi-orange">
+      <div class="kpi-val">8.8%</div>
+      <div class="kpi-lbl">Quality Issue Rate</div>
+    </div>
+  </div>
+
+  <div class="chart-grid g-2">
+    <div class="chart-card">
+      <div class="chart-title">Total Revenue by Farm ($M)</div>
+      <div class="chart-wrap"><canvas id="farmChart" height="200"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Payment Status Distribution</div>
+      <div class="chart-wrap"><canvas id="payChart" height="200"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PAGE 2 — MARKETS
+════════════════════════════════════════════════════════ -->
+<div class="page" id="page-markets">
+  <div class="page-title">🌍 Export Market Analysis</div>
+
+  <div class="kpi-row kpi-3">
+    <div class="kpi-card kpi-yellow">
+      <div class="kpi-val">Japan</div>
+      <div class="kpi-lbl">Top Export Market</div>
+      <div class="kpi-sub">$8.3M revenue</div>
+    </div>
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-val">Interflora Russia</div>
+      <div class="kpi-lbl">Top Buyer</div>
+      <div class="kpi-sub">$10M+ revenue</div>
+    </div>
+    <div class="kpi-card kpi-green">
+      <div class="kpi-val">Top 5</div>
+      <div class="kpi-lbl">Markets = 44% of Revenue</div>
+      <div class="kpi-sub">Japan, Russia, Norway, Poland, Switzerland</div>
+    </div>
+  </div>
+
+  <div class="chart-grid g-2">
+    <div class="chart-card">
+      <div class="chart-title">Revenue by Destination Country — Top 8 ($M)</div>
+      <div class="chart-wrap"><canvas id="countryChart" height="280"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Market Summary Table</div>
+      <table>
+        <tr><th>Country</th><th>Revenue</th><th>Status</th></tr>
+        <tr><td>Japan</td><td>$8.3M</td><td><span class="badge badge-green">Top Market</span></td></tr>
+        <tr><td>Russia</td><td>$6.7M</td><td><span class="badge badge-green">Strong</span></td></tr>
+        <tr><td>Norway</td><td>$5.5M</td><td><span class="badge badge-green">Strong</span></td></tr>
+        <tr><td>Poland</td><td>$5.3M</td><td><span class="badge badge-blue">Growing</span></td></tr>
+        <tr><td>Switzerland</td><td>$5.2M</td><td><span class="badge badge-blue">Growing</span></td></tr>
+        <tr><td>Germany</td><td>$5.0M</td><td><span class="badge badge-blue">Stable</span></td></tr>
+        <tr><td>France</td><td>$4.8M</td><td><span class="badge badge-blue">Stable</span></td></tr>
+        <tr><td>Australia</td><td>$3.7M</td><td><span class="badge badge-amber">Develop</span></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PAGE 3 — PRODUCTS
+════════════════════════════════════════════════════════ -->
+<div class="page" id="page-products">
+  <div class="page-title">🌹 Product & Farm Performance</div>
+
+  <div class="kpi-row kpi-4">
+    <div class="kpi-card kpi-red">
+      <div class="kpi-val">Explorer</div>
+      <div class="kpi-lbl">Top Rose Variety</div>
+      <div class="kpi-sub">$7.3M revenue</div>
+    </div>
+    <div class="kpi-card kpi-yellow">
+      <div class="kpi-val">Ziwa</div>
+      <div class="kpi-lbl">Top Farm</div>
+      <div class="kpi-sub">$16.2M revenue</div>
+    </div>
+    <div class="kpi-card kpi-orange">
+      <div class="kpi-val">$8.30</div>
+      <div class="kpi-lbl">Highest Price/Stem</div>
+      <div class="kpi-sub">Grade B ⚠️ anomaly</div>
+    </div>
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-val">6</div>
+      <div class="kpi-lbl">Active Farms</div>
+      <div class="kpi-sub">Rift Valley, Kenya</div>
+    </div>
+  </div>
+
+  <div class="chart-grid g-2">
+    <div class="chart-card">
+      <div class="chart-title">Revenue by Rose Variety — Top 6 ($M)</div>
+      <div class="chart-wrap"><canvas id="varietyChart" height="220"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Farm Performance Summary</div>
+      <table>
+        <tr><th>Farm</th><th>Revenue</th><th>Rejection</th><th>Rank</th></tr>
+        <tr><td>Ziwa</td><td>$16.2M</td><td><span class="badge badge-green">0.14%</span></td><td>🥇 1st</td></tr>
+        <tr><td>Timboroa</td><td>$14.9M</td><td><span class="badge badge-green">0.17%</span></td><td>🥈 2nd</td></tr>
+        <tr><td>Kapseret</td><td>$10.4M</td><td><span class="badge badge-red">0.27%</span></td><td>⚠️ 3rd</td></tr>
+        <tr><td>Moiben</td><td>$9.8M</td><td><span class="badge badge-green">0.17%</span></td><td>4th</td></tr>
+        <tr><td>Kesses</td><td>$9.6M</td><td><span class="badge badge-green">0.17%</span></td><td>5th</td></tr>
+        <tr><td>Turbo</td><td>$8.5M</td><td><span class="badge badge-green">0.16%</span></td><td>6th</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PAGE 4 — QUALITY
+════════════════════════════════════════════════════════ -->
+<div class="page" id="page-quality">
+  <div class="page-title">🔬 Quality & Rejection Analysis</div>
+
+  <div class="kpi-row kpi-4">
+    <div class="kpi-card kpi-orange">
+      <div class="kpi-val">8.8%</div>
+      <div class="kpi-lbl">Orders with Quality Issues</div>
+      <div class="kpi-sub">196 of 2,226 orders</div>
+    </div>
+    <div class="kpi-card kpi-red">
+      <div class="kpi-val">Kapseret</div>
+      <div class="kpi-lbl">Highest Rejection Farm</div>
+      <div class="kpi-sub">0.27% rejection rate</div>
+    </div>
+    <div class="kpi-card kpi-yellow">
+      <div class="kpi-val">Petal Bruising</div>
+      <div class="kpi-lbl">Top Quality Issue</div>
+      <div class="kpi-sub">35 orders affected</div>
+    </div>
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-val">~0.00</div>
+      <div class="kpi-lbl">Temp vs Rejection Corr.</div>
+      <div class="kpi-sub">Temperature NOT the cause</div>
+    </div>
+  </div>
+
+  <div class="chart-grid g-2">
+    <div class="chart-card">
+      <div class="chart-title">Quality Issues by Type — Order Count</div>
+      <div class="chart-wrap"><canvas id="qualityChart" height="220"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Rejection Rate by Farm (%)</div>
+      <div class="chart-wrap"><canvas id="rejChart" height="220"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PAGE 5 — LOGISTICS
+════════════════════════════════════════════════════════ -->
+<div class="page" id="page-logistics">
+  <div class="page-title">🚚 Logistics & Payment Performance</div>
+
+  <div class="kpi-row kpi-4">
+    <div class="kpi-card kpi-green">
+      <div class="kpi-val">38.4%</div>
+      <div class="kpi-lbl">Confirmed Paid</div>
+      <div class="kpi-sub">854 orders</div>
+    </div>
+    <div class="kpi-card kpi-orange">
+      <div class="kpi-val">23.9%</div>
+      <div class="kpi-lbl">Pending Payment</div>
+      <div class="kpi-sub">531 orders</div>
+    </div>
+    <div class="kpi-card kpi-red">
+      <div class="kpi-val">13.7%</div>
+      <div class="kpi-lbl">Overdue Payment</div>
+      <div class="kpi-sub">304 orders ⚠️ urgent</div>
+    </div>
+    <div class="kpi-card kpi-purple">
+      <div class="kpi-val">24.1%</div>
+      <div class="kpi-lbl">Unknown Status</div>
+      <div class="kpi-sub">537 orders — investigate</div>
+    </div>
+  </div>
+
+  <div class="chart-grid g-2">
+    <div class="chart-card">
+      <div class="chart-title">Payment Status Breakdown</div>
+      <div class="chart-wrap"><canvas id="pay2Chart" height="220"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Shipping Method Comparison</div>
+      <table>
+        <tr><th>Metric</th><th>Air Freight</th><th>Road then Air</th></tr>
+        <tr><td>Avg Delivery</td><td>3.1 days</td><td><span class="badge badge-green">0.7 days ✓</span></td></tr>
+        <tr><td>Avg Freight Cost</td><td><span class="badge badge-green">$299 ✓</span></td><td>$311</td></tr>
+        <tr><td>Avg Rating</td><td>4.00 / 5</td><td><span class="badge badge-green">4.08 / 5 ✓</span></td></tr>
+        <tr><td>Recommendation</td><td>Cost effective</td><td><span class="badge badge-green">Faster + Better rated</span></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PAGE 6 — STORYTELLING SUMMARY
+════════════════════════════════════════════════════════ -->
+<div class="page" id="page-story">
+  <div class="page-title">📖 Management Summary — Storytelling Checkpoint (Parts 4–7)</div>
+
+  <!-- Section 1 -->
+  <div class="story-card">
+    <h3>1. What is Happening in the Business?</h3>
+    <p>Rift Bloom Roses is a well-established rose export business operating <strong>six farms</strong> across the Rift Valley. It processes over <strong>2,200 orders per year</strong> and generates total revenues of <strong>$69.7 million</strong>.</p>
+    <p>While the average order is $31,325, the <strong>typical order is worth only $925</strong> — a gap caused by a small number of very large wholesale orders inflating the average. The business is fundamentally healthy, with a customer rating of <strong>4.02/5</strong> and a rejection rate of just <strong>0.18%</strong>. However, quality control, payment collection and logistics weaknesses require immediate attention.</p>
+  </div>
+
+  <!-- Section 2 -->
+  <div class="story-card blue">
+    <h3>2. Where are the Strongest Markets?</h3>
+    <p><strong>Japan leads</strong> at $8.3 million, followed by Russia ($6.7M), Norway ($5.5M), Poland ($5.3M) and Switzerland ($5.2M). The top five markets account for <strong>44% of all export revenue</strong>.</p>
+    <p>From a buyer perspective, <strong>Interflora Russia</strong> is the highest-value client, followed by Tokyo Flower Market, Carrefour Flowers and Marks & Spencer. These four buyers alone contribute over <strong>$36 million — more than half of total revenue</strong>.</p>
+    <ul class="bullet-list">
+      <li class="green-bullet">Japan, Russia and Norway are the priority markets to protect and grow</li>
+      <li class="green-bullet">Australia at $3.7M represents an underdeveloped growth opportunity</li>
+    </ul>
+  </div>
+
+  <!-- Section 3 -->
+  <div class="story-card green">
+    <h3>3. Which Products are Performing Best?</h3>
+    <p><strong>Explorer</strong> leads varieties at $7.3M, followed by Cool Water ($6.7M), Circus ($6.6M) and Sweetness ($5.9M). At the farm level, <strong>Ziwa Farm</strong> leads with $16.2M followed by <strong>Timboroa Farm</strong> at $14.9M — together nearly half of all revenue.</p>
+    <ul class="bullet-list">
+      <li class="green-bullet">Explorer, Cool Water and Circus should receive priority production allocation</li>
+      <li class="red-bullet">Grade B roses command a HIGHER price than Grade A ($8.30 vs $7.59) — the grading system needs urgent review</li>
+    </ul>
+  </div>
+
+  <!-- Section 4 -->
+  <div class="story-card red">
+    <h3>4. Where are the Major Quality Problems?</h3>
+    <p><strong>8.8% of orders (196 transactions)</strong> recorded a quality issue. The most common problems are Petal Bruising (35), Botrytis (30), Undersized Stems (28), Bud Blast (27) and Wilting (27).</p>
+    <ul class="bullet-list">
+      <li class="red-bullet">Kapseret Farm has the highest rejection rate at 0.27% — immediate quality audit required</li>
+      <li class="red-bullet">Shipping temperature does NOT explain rejections (correlation ≈ 0). Problems are at farm level — handling, packaging or harvest timing</li>
+      <li class="red-bullet">Cold Chain Break recorded in 20 orders — temperature management during transit needs review</li>
+    </ul>
+  </div>
+
+  <!-- Section 5 -->
+  <div class="story-card orange">
+    <h3>5. What Logistics Problems Exist?</h3>
+    <p>Road then Air shipping is faster (0.7 days vs 3.1 days) and achieves a higher rating (4.08 vs 4.00) but is slightly more expensive ($311 vs $299). The bigger concern is <strong>payment collection</strong>:</p>
+    <ul class="bullet-list">
+      <li class="red-bullet">Only 38.4% of orders are confirmed paid — a serious cash flow risk</li>
+      <li class="red-bullet">304 orders (13.7%) are overdue — revenue locked up with no recovery timeline</li>
+      <li class="red-bullet">537 orders (24.1%) have an Unknown payment status — these must be investigated immediately</li>
+    </ul>
+  </div>
+
+  <!-- Section 6 — Recommendations -->
+  <div class="story-card purple">
+    <h3>6. What Should Management Do? — Top 5 Recommendations</h3>
+  </div>
+
+  <div class="rec-grid">
+    <div class="rec-card r-red">
+      <div class="rec-num">1</div>
+      <h4>Protect Key Buyers</h4>
+      <p>Interflora Russia, Tokyo Flower Market and Carrefour Flowers generate over $26M combined. Dedicate account managers and guarantee first allocation of premium stock to these three buyers.</p>
+    </div>
+    <div class="rec-card r-green">
+      <div class="rec-num">2</div>
+      <h4>Expand Top Varieties</h4>
+      <p>Scale production of Explorer, Cool Water, Circus and Sweetness across all farms. These varieties deliver the highest and most consistent revenue returns.</p>
+    </div>
+    <div class="rec-card r-orange">
+      <div class="rec-num">3</div>
+      <h4>Audit Kapseret Farm</h4>
+      <p>With the highest rejection rate (0.27%) and $10.4M in revenue at risk, an immediate quality control review is essential. Root causes must be identified within 60 days.</p>
+    </div>
+    <div class="rec-card r-blue">
+      <div class="rec-num">4</div>
+      <h4>Resolve Overdue Payments</h4>
+      <p>304 overdue orders represent a growing cash flow crisis. Launch a dedicated collections process targeting the oldest invoices first. Investigate 537 orders with Unknown status.</p>
+    </div>
+    <div class="rec-card r-purple">
+      <div class="rec-num">5</div>
+      <h4>Review the Grading System</h4>
+      <p>Grade B roses command higher prices than Grade A — the grading system does not reflect market value. A full pricing and quality audit is needed to realign grades with buyer expectations.</p>
+    </div>
+  </div>
+</div>
+
+<div class="pbi-footer">
+  Rift Bloom Roses Export Sales Intelligence Dashboard &nbsp;|&nbsp;
+  Data Science Capstone &nbsp;|&nbsp;
+  Educational Prototype — Fictional Training Dataset &nbsp;|&nbsp;
+  2,226 Orders Analysed
+</div>
+
+<script>
+// ── Shared chart defaults ───────────────────────────
+Chart.defaults.color = '#aaa';
+Chart.defaults.font.family = 'Segoe UI';
+Chart.defaults.font.size = 11;
+
+const PALETTE = ['#2ecc71','#3498db','#e74c3c','#f39c12',
+                 '#9b59b6','#1abc9c','#e67e22','#34495e'];
+
+// ── Page navigation ────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── Farm Revenue Chart ─────────────────────────────
+new Chart(document.getElementById('farmChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Ziwa','Timboroa','Kapseret','Moiben','Kesses','Turbo'],
+    datasets: [{
+      label: 'Revenue ($M)',
+      data: [16.2, 14.9, 10.4, 9.8, 9.6, 8.5],
+      backgroundColor: PALETTE,
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: '#2e2e40' }, ticks: { callback: v => '$' + v + 'M' } },
+      y: { grid: { display: false } }
+    }
+  }
+});
+
+// ── Payment Donut ──────────────────────────────────
+new Chart(document.getElementById('payChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Paid 38.4%','Unknown 24.1%','Pending 23.9%','Overdue 13.7%'],
+    datasets: [{
+      data: [854, 537, 531, 304],
+      backgroundColor: ['#2ECC71','#717D7E','#F39C12','#E74C3C'],
+      borderWidth: 2, borderColor: '#252630',
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom', labels: { padding: 12, font: { size: 10 } } }
+    },
+    cutout: '60%',
+  }
+});
+
+// ── Country Bar ────────────────────────────────────
+new Chart(document.getElementById('countryChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Japan','Russia','Norway','Poland','Switzerland','Germany','France','Australia'],
+    datasets: [{
+      label: 'Revenue ($M)',
+      data: [8.3, 6.7, 5.5, 5.3, 5.2, 5.0, 4.8, 3.7],
+      backgroundColor: '#2471A3',
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: '#2e2e40' }, ticks: { callback: v => '$' + v + 'M' } },
+      y: { grid: { display: false } }
+    }
+  }
+});
+
+// ── Variety Bar ────────────────────────────────────
+new Chart(document.getElementById('varietyChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Explorer','Cool Water','Circus','Sweetness','Vendela','Tibet'],
+    datasets: [{
+      label: 'Revenue ($M)',
+      data: [7.3, 6.7, 6.6, 5.9, 5.5, 5.0],
+      backgroundColor: PALETTE,
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { maxRotation: 30 } },
+      y: { grid: { color: '#2e2e40' }, ticks: { callback: v => '$' + v + 'M' } }
+    }
+  }
+});
+
+// ── Quality Issues Bar ─────────────────────────────
+new Chart(document.getElementById('qualityChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Petal Bruising','Botrytis','Undersized Stems','Bud Blast','Wilting','Stem Bent'],
+    datasets: [{
+      label: 'Orders',
+      data: [35, 30, 28, 27, 27, 26],
+      backgroundColor: '#E74C3C',
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: '#2e2e40' } },
+      y: { grid: { display: false } }
+    }
+  }
+});
+
+// ── Rejection Rate by Farm ─────────────────────────
+new Chart(document.getElementById('rejChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Kapseret','Timboroa','Moiben','Kesses','Turbo','Ziwa'],
+    datasets: [{
+      label: 'Rejection Rate (%)',
+      data: [0.27, 0.17, 0.17, 0.17, 0.16, 0.14],
+      backgroundColor: ['#E74C3C','#F39C12','#F39C12','#F39C12','#2ECC71','#2ECC71'],
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { maxRotation: 30 } },
+      y: { grid: { color: '#2e2e40' }, ticks: { callback: v => v + '%' } }
+    }
+  }
+});
+
+// ── Payment Donut Page 5 ───────────────────────────
+new Chart(document.getElementById('pay2Chart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Paid','Pending','Overdue','Unknown'],
+    datasets: [{
+      data: [854, 531, 304, 537],
+      backgroundColor: ['#2ECC71','#F39C12','#E74C3C','#717D7E'],
+      borderWidth: 2, borderColor: '#252630',
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom', labels: { padding: 12 } }
+    },
+    cutout: '55%',
+  }
+});
+</script>
+</body>
+</html>
