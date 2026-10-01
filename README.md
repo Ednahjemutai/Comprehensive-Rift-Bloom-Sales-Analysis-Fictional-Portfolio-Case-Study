@@ -188,3 +188,4 @@ Install dependencies:
 
 ```bash
 pip install pandas numpy matplotlib
+file:///C:/Users/ednac/Downloads/Rift%20Bloom%20Roses%20%E2%80%94%20Power%20BI%20Style%20Management%20Dashboard.html
