@@ -189,4 +189,4 @@ Install dependencies:
 ```bash
 pip install pandas numpy matplotlib
 
-(https://ednachoge49.github.io/rift-bloom-dashboard/)
+file:///D:/datasets/2026%20CAPSTONE/Rift%20Bloom%20farms%20analysis%202026%20index.html.htm
